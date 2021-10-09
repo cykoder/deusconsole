@@ -37,7 +37,7 @@ jobs:
       # Build with G++
       - name: Build
         run: |
-          g++ test.cpp
+          clang++ -Wall -std=c++17 test.cpp -o test
       - name: Show content of workspace at its completion
         run: find $RUNNER_WORKSPACE
         shell: bash
