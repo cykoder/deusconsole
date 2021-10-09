@@ -32,19 +32,19 @@ struct DeusConsoleException : public std::exception {
 
 // Flags that can be set on defined console variables
 enum EDeusCVarFlags {
-  DEUS_CVAR_DEFAULT                     = 0, // Default, no flags are set, the value is set by the constructor
-  DEUS_CVAR_DEVELOPER                   = (1 << 1), // Console variables marked with this flag cant be changed in a final build
-  DEUS_CVAR_READONLY                    = (1 << 2), // Console variables cannot be changed by the user
-  DEUS_CVAR_UNREGISTERED                = (1 << 3), // Doesnt get registered to console manager
+  DEUS_CVAR_DEFAULT      = 0, // Default, no flags are set, the value is set by the constructor
+  DEUS_CVAR_DEVELOPER    = (1 << 1), // Console variables marked with this flag cant be changed in a final build
+  DEUS_CVAR_READONLY     = (1 << 2), // Console variables cannot be changed by the user
+  DEUS_CVAR_UNREGISTERED = (1 << 3), // Doesnt get registered to console manager
 };
 
 // Flags that can be set on defined console variables
 enum EDeusVarTypeFlags {
-  DEUS_VARTYPE_STRING =     0,
-  DEUS_VARTYPE_INT =        1,
-  DEUS_VARTYPE_DEC =        2,
+  DEUS_VARTYPE_STRING     = 0,
+  DEUS_VARTYPE_INT        = 1,
+  DEUS_VARTYPE_DEC        = 2,
   DEUS_VARTYPE_BOOL_FALSE = 3,
-  DEUS_VARTYPE_BOOL_TRUE =  4,
+  DEUS_VARTYPE_BOOL_TRUE  = 4,
 };
 
 // Parsed command tokens from string input
@@ -73,16 +73,15 @@ struct DeusCommandType {
 typedef std::function<void(DeusCommandType&)> TDeusConsoleFunc;
 typedef std::function<void*()> TDeusConsoleFuncRead;
 typedef std::function<void(void*)> TDeusConsoleFuncVoid;
-typedef std::function<void(char*)> TDeusConsoleFuncWriteInt;
+typedef std::function<void(char*)> TDeusConsoleFuncWriteChar;
 
 // Wrapper for console variables and their flags/methods
 struct DeusConsoleVariable {
-  int flags;
-
-  TDeusConsoleFuncWriteInt writeIntFromBuffer;
-  TDeusConsoleFuncWriteInt writeDecimalFromBuffer;
+  TDeusConsoleFuncWriteChar writeIntFromBuffer;
+  TDeusConsoleFuncWriteChar writeDecimalFromBuffer;
   TDeusConsoleFuncVoid write;
   TDeusConsoleFuncRead read;
+  int flags;
 };
 
 // Checks if an input buffer of n length could be a numeric string
@@ -354,6 +353,8 @@ class IDeusConsoleManager {
       // Check if target is a variable to write/read
       if (this->variableExists(cmdTarget)) {
         if (commandResult.argc == 0) { // Zero tokens is a read op
+          // TODO: FIX: Reading variable doesnt add its value to returnStr
+
           return static_cast<T>(this->getCVar<T>(cmdTarget));
         } else if (commandResult.argc == 1) { // One token is write op
           // Get the variable for our intended target
@@ -437,9 +438,10 @@ class TDeusStaticConsoleVariable {
     }
 };
 
-
+// Static console member, it has to be static to support TDeusStaticConsoleVariable static defs
 static IDeusConsoleManager deusStaticConsole;
 
+// Return static console ref as a pointer for runtime usage
 IDeusConsoleManager* IDeusConsoleManager::get() {
   return &deusStaticConsole;
 }
