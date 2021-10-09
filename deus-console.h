@@ -106,13 +106,34 @@ inline int isNumericStr(char* str, size_t len) {
   return hasPeriod ? 2 : 1;
 }
 
+// Trim all whitespace from string
+// taken from https://stackoverflow.com/questions/122616/how-do-i-trim-leading-trailing-whitespace-in-a-standard-way
+inline static void trimStr(char* str) {
+  char *end;
+
+  // Trim leading space
+  while(isspace((unsigned char)*str)) str++;
+
+  if(*str == 0)  // All spaces?
+    return;
+
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while(end > str && isspace((unsigned char)*end)) end--;
+
+  // Write new null terminator character
+  end[1] = '\0';
+}
+
+typedef std::unordered_map<const char*, const char*> DeusConsoleHelpTable;
+
 // Class to manage all console variables and commands
 // Does not do any input processing
 class IDeusConsoleManager {
   private:
     std::unordered_map<const char*, DeusConsoleVariable> variableTable;
     std::unordered_map<const char*, TDeusConsoleFunc> methodTable;
-    std::unordered_map<const char*, const char*> helpTable;
+    DeusConsoleHelpTable helpTable;
 
     // Gets a variable reference by name
     DeusConsoleVariable& getVariable(const char* name) {
@@ -151,6 +172,11 @@ class IDeusConsoleManager {
         }
         cmd.returnStr = result;
       }, "Returns a list of variables/methods and their descriptions");
+    }
+
+    // Returns a reference to the help table itself, useful for iterating over potential cmds
+    DeusConsoleHelpTable& getHelpTable() {
+      return this->helpTable;
     }
 
     // Returns help text for a specific variable or method
@@ -252,6 +278,9 @@ class IDeusConsoleManager {
       // Copy input buffer into workable memory
       char command[512];
       strcpy(command, inputCmd);
+
+      // Trim whitespace from command
+      trimStr(command);
 
       // Split string into tokens
       const char* whitespaceStr = " ";
@@ -400,7 +429,7 @@ class IDeusConsoleManager {
         TDeusConsoleFunc& method = this->getMethod(cmdTarget);
         method(commandResult);
       } else {
-        throw DeusConsoleException("No variable or method found");
+        throw DeusConsoleException("No variable or method found: " + (std::string)cmdTarget);
       }
 
       return static_cast<T>(NULL);
