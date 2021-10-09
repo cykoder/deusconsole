@@ -12,14 +12,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest] #, macos-latest, windows-latest]
+        os: [ubuntu-latest]
+        # os: [ubuntu-latest, macos-latest, windows-latest]
         include:
-          - runs-on: ubuntu-latest
+          # - os: windows-latest
+          #   triplet: x64-windows
+          - os: ubuntu-latest
+            triplet: x64-linux
             compiler: gcc
             gcc: 8
+          # - os: macos-latest
+          #   triplet: x64-osx
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Install dependencies on macos
+        if: startsWith(matrix.config.os, 'macos')
+        run: |
+          brew install p7zip cmake ninja
+          ninja --version
+          cmake --version
 
       # Build with G++
       - name: Build
