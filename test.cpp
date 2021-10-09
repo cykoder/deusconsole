@@ -48,6 +48,11 @@ static TDeusStaticConsoleVariable<bool> CVarTestBool(
 int main(int argc, char* argv[]) {
   IDeusConsoleManager* console = IDeusConsoleManager::get();
 
+  // Binding and running basic commands
+  console->registerMethod("myMethod", [](DeusCommandType& cmd) {
+    cmd.returnStr = "returned";
+  }, "This description is optional");
+
   // Test default values from static references
   expectEqual(CVarTestUint.get(), 200, "Test uint equals 200");
   expectEqual(CVarTestInteger.get(), 123, "Test integer equals 123");
@@ -135,7 +140,10 @@ int main(int argc, char* argv[]) {
   expectEqual(console->getCVar<std::string>("test.string"), "consoleiscool", "Changing string to single word from console command");
 
   console->runCommand("test.string 'this is a string'");
-  expectEqual(console->getCVar<std::string>("test.string"), "this is a string", "Changing string to multiple words from console command");
+  expectEqual(console->getCVar<std::string>("test.string"), "this is a string", "Changing string to multiple words from console command with single quotes");
+
+  console->runCommand("test.string \"another test str\"");
+  expectEqual(console->getCVar<std::string>("test.string"), "another test str", "Changing string to multiple words from console command with double quotes");
 
   // Test creating runtime variables
   float myRuntimeVar = 100.0f;
@@ -146,14 +154,18 @@ int main(int argc, char* argv[]) {
   console->runCommand("test.runtimefloat 64.0");
   expectEqual(myRuntimeVar, 64.0f, "Modfying runtime float from command");
 
+  // Test trimming whitespace
+  console->runCommand("test.integer 54321        \t");
+  expectEqual(console->getCVar<int>("test.integer"), 54321, "End whitespace should be trimmed for a command");
+
+  // // Test command chaining
+  // console->runCommand("test.integer 42; test.string 'hello world'; myMethod");
+  // expectEqual(console->getCVar<int>("test.integer"), 42, "Command chaining operation 1 succeeds");
+  // expectEqual(console->getCVar<std::string>("test.string"), "hello world", "Command chaining operation 2 succeeds");
+
   // Can get help text for a console variable
   expectEqual(console->getHelp("test.uint"), "A test uint8_t variable", "test.uint help text is correct");
   expectEqual(console->getHelp("test.cstring"), "A test C string variable", "test.cstring help text is correct");
-
-  // Binding and running basic commands
-  console->registerMethod("myMethod", [](DeusCommandType& cmd) {
-    cmd.returnStr = "returned";
-  }, "This description is optional");
 
   // Run without arguments or expecting a return value
   console->runCommand("myMethod");

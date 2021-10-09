@@ -304,8 +304,8 @@ class IDeusConsoleManager {
             strcpy(commandToken.str, "0");
           } else {
             const size_t tokenLength = strlen(cmdToken);
-            const bool isStringStart = !isStringParsing && cmdToken[0] == '\'';
-            const bool isStringEnd = isStringParsing && cmdToken[tokenLength - 1] == '\'';
+            const bool isStringStart = !isStringParsing && (cmdToken[0] == '\'' || cmdToken[0] == '"');
+            const bool isStringEnd = isStringParsing && (cmdToken[tokenLength - 1] == '\'' || cmdToken[tokenLength - 1] == '"');
 
             // Detect if string is numeric, if not already string parsing
             const int tokenNumericalType = !isStringParsing && !isStringStart && !isStringEnd ? isNumericStr(cmdToken, tokenLength) : 0;
