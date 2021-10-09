@@ -24,12 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Build with G++
       - name: Build
         run: |
           clang++ -Wall -std=c++17 test.cpp -o test
 
-      # Run tests
-      - name: Test
         run: |
           ./test add 2 3 4
