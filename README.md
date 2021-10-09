@@ -2,7 +2,7 @@
 
 A tiny C++17, header only quake/source style console engine allowing for runtime modification of variables and calling of methods. Useful for game engines and GUI tools.
 
-Check out the [ImGui demo here](https://samhellawell.github.io/deusconsole/) and the [source code here](./example)
+Check out the [ImGui demo here](https://samhellawell.github.io/deusconsole/) and its [source code here](./example). You can also refer to [the tests](./test.cpp) to see usage examples.
 
 # Features
 
