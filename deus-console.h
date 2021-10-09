@@ -1,3 +1,8 @@
+/*
+ * Copyright 2021-2021 Samuel Hellawell. All rights reserved.
+ * License: https://github.com/SamHellawell/deusconsole/blob/master/LICENSE
+ */
+
 #ifndef DEUS_CONSOLE_MGR
 #define DEUS_CONSOLE_MGR
 
@@ -7,6 +12,7 @@
 #include <functional>
 #include <sstream>
 #include <memory>
+#include <vector>
 #include <exception>
 #include <cassert>
 #include <string.h>
