@@ -53,4 +53,10 @@ There is no extensive test framework or anything used, just simple if/else macro
 g++ test.cpp && ./a.out add 2 3 4
 ```
 
+or
+
+```bash
+clang++ -Wall -std=c++17 test.cpp
+```
+
 Any arguments will be treated as a command to be processed, for example: `add 2 3 4` will internally call the `add` method with those arguments.
