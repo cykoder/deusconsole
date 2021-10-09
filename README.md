@@ -1,6 +1,6 @@
 # Deus Console
 
-A C++ tiny, header only quake/source style console engine allowing for runtime modification of variables and calling of methods. Useful for game engines and GUI tools.
+A C++17 tiny, header only quake/source style console engine allowing for runtime modification of variables and calling of methods. Useful for game engines and GUI tools.
 
 # Features
 
