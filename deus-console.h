@@ -380,10 +380,8 @@ class IDeusConsoleManager {
               variable.writeDecimalFromBuffer(tokenInput);
             }
           } else if (tokenType == DEUS_VARTYPE_BOOL_FALSE) {
-            std::cout << "DEUS_VARTYPE_BOOL_FALSE " << tokenInput << std::endl;
             variable.writeIntFromBuffer(tokenInput);
           } else if (tokenType == DEUS_VARTYPE_BOOL_TRUE) {
-            std::cout << "DEUS_VARTYPE_BOOL_TRUE " << tokenInput << std::endl;
             variable.writeIntFromBuffer(tokenInput);
           } else { // Should never happen
             assert(false);
