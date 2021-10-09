@@ -259,7 +259,6 @@ class IDeusConsoleManager {
       bool isStringParsing = false;
       char* cmdToken = strtok(command, whitespaceStr);
       DeusCommandToken commandToken;
-      size_t parseStrOffset = 0;
       bool isFirstToken = true;
       while (cmdToken != NULL) {
         if (isFirstToken) { // First token is always the target
