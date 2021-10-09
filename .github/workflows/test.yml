@@ -38,6 +38,8 @@ jobs:
       - name: Build
         run: |
           clang++ -Wall -std=c++17 test.cpp -o test
-      - name: Show content of workspace at its completion
-        run: find $RUNNER_WORKSPACE
-        shell: bash
+
+      # Run tests
+      - name: Test
+        run: |
+          ./test add 2 3 4
