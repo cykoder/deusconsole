@@ -160,7 +160,6 @@ class IDeusConsoleManager {
     }
 
   public:
-    static IDeusConsoleManager* get();
     IDeusConsoleManager() {};
 
     // Binds base commands that may be useful, call as an initializer
@@ -442,6 +441,13 @@ class IDeusConsoleManager {
       DeusCommandType commandResult;
       return this->runCommandAs<T>(command, commandResult);
     }
+
+    // Return static console ref as a pointer for runtime usage
+    static IDeusConsoleManager* get() {
+      // Static console member, it has to be static to support TDeusStaticConsoleVariable static defs
+      static IDeusConsoleManager deusStaticConsole;
+      return &deusStaticConsole;
+    }
 };
 
 // Helper for statically declared console variables at compile time
@@ -466,13 +472,5 @@ class TDeusStaticConsoleVariable {
       return this->rawValue;
     }
 };
-
-// Static console member, it has to be static to support TDeusStaticConsoleVariable static defs
-static IDeusConsoleManager deusStaticConsole;
-
-// Return static console ref as a pointer for runtime usage
-IDeusConsoleManager* IDeusConsoleManager::get() {
-  return &deusStaticConsole;
-}
 
 #endif
