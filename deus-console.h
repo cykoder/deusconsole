@@ -257,7 +257,6 @@ class IDeusConsoleManager {
       // Split string into tokens
       const char* whitespaceStr = " ";
       bool isStringParsing = false;
-      char tmpTokenBuffer[256];
       char* cmdToken = strtok(command, whitespaceStr);
       DeusCommandToken commandToken;
       size_t parseStrOffset = 0;
