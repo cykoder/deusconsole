@@ -17,6 +17,7 @@ Drop the header into your project through whatever means you like and include it
 ```c++
 #include "deus-console.h"
 
+// Bind custom variable
 static TDeusStaticConsoleVariable<int> CVarTestInteger(
   "test.integer",
   123,
@@ -24,10 +25,16 @@ static TDeusStaticConsoleVariable<int> CVarTestInteger(
 );
 
 int main(int argc, char* argv[]) {
+  // Get console instance and bind base commands (such as help)
   IDeusConsoleManager* console = IDeusConsoleManager::get();
+  console->bindBaseCommands();
+
+  // Use custom variable
   int myVar = console->getCVar<int>("test.integer");
   std::cout << "myVar value: " << myVar << std::endl;
   std::cout << "myVar value: " << CVarTestInteger.get() << std::endl;
+
+  // Output help
   std::cout << console->runCommand("help") << std::endl;
 }
 ```
