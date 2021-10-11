@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
   } catch (DeusConsoleException e) {
     didThrow = true;
   }
-  expectEqual(didThrow, true, "Cannot modify constant variable");
+  expectEqual(didThrow, true, "Cannot call add with a single number");
 
   std::cout << std::endl << "Running base commands..." << std::endl;
   console->bindBaseCommands();
