@@ -33,7 +33,7 @@ EMS =
 
 # ("EMS" options gets added to both CPPFLAGS and LDFLAGS, whereas some options are for linker only)
 EMS += -s USE_SDL=2
-EMS += -s DISABLE_EXCEPTION_CATCHING=1
+# EMS += -s DISABLE_EXCEPTION_CATCHING=1
 LDFLAGS += -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s NO_EXIT_RUNTIME=0 -s ASSERTIONS=1
 
 # Emscripten allows preloading a file or folder to be accessible at runtime.
