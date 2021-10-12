@@ -71,16 +71,20 @@ struct DeusCommandType {
 
 // Readability typedefs
 typedef std::function<void(DeusCommandType&)> TDeusConsoleFunc;
+typedef std::function<std::string()> TDeusConsoleFuncToString;
 typedef std::function<void*()> TDeusConsoleFuncRead;
 typedef std::function<void(void*)> TDeusConsoleFuncVoid;
 typedef std::function<void(char*)> TDeusConsoleFuncWriteChar;
+typedef std::unordered_map<const char*, const char*> DeusConsoleHelpTable;
 
 // Wrapper for console variables and their flags/methods
 struct DeusConsoleVariable {
+  TDeusConsoleFuncVoid write;
   TDeusConsoleFuncWriteChar writeIntFromBuffer;
   TDeusConsoleFuncWriteChar writeDecimalFromBuffer;
-  TDeusConsoleFuncVoid write;
   TDeusConsoleFuncRead read;
+  TDeusConsoleFuncVoid onUpdate;
+  TDeusConsoleFuncToString toString;
   int flags;
 };
 
@@ -125,7 +129,33 @@ inline static void trimStr(char* str) {
   end[1] = '\0';
 }
 
-typedef std::unordered_map<const char*, const char*> DeusConsoleHelpTable;
+// Default helper implementation to convert type to string
+// if you register custom types, you will need to create an override
+// like below. See std::string and const char* representations
+template <typename T>
+struct TConsoleTypeHelper {
+  static std::string toString(T& val) {
+    return std::to_string(val);
+  }
+};
+
+// Convert c string to std::string
+template <>
+struct TConsoleTypeHelper<const char*> {
+  static std::string toString(const char* val) {
+    return std::string(val);
+  }
+};
+
+// Convert std::string to std::string
+template <>
+struct TConsoleTypeHelper<std::string> {
+  static std::string toString(std::string& val) {
+    return val;
+  }
+};
+
+
 
 // Class to manage all console variables and commands
 // Does not do any input processing
@@ -214,7 +244,7 @@ class IDeusConsoleManager {
     // This method will take a name, value reference, help description and flags for a console variable
     // and will assign it to the various tables required for reading/writing/remembering arguments
     template <typename T>
-    void registerCVar(const char* name, T& value, const char* description = "", int flags = DEUS_CVAR_DEFAULT) {
+    void registerCVar(const char* name, T& value, const char* description = "", int flags = DEUS_CVAR_DEFAULT, TDeusConsoleFuncVoid onUpdate = NULL) {
       // Skip registration if flag defined
       if (flags & DEUS_CVAR_UNREGISTERED) {
         return;
@@ -226,6 +256,10 @@ class IDeusConsoleManager {
         variable.flags = flags;
         variable.read = [&value]() {
           return &value;
+        };
+        variable.onUpdate = onUpdate;
+        variable.toString = [&value]() {
+          return TConsoleTypeHelper<T>::toString(value);
         };
         if (!(flags & DEUS_CVAR_READONLY)) {
           this->bindWriteMethods(value, variable);
@@ -382,8 +416,9 @@ class IDeusConsoleManager {
       if (this->variableExists(cmdTarget)) {
         if (commandResult.argc == 0) { // Zero tokens is a read op
           // TODO: FIX: Reading variable doesnt add its value to returnStr
-
-          return static_cast<T>(this->getCVar<T>(cmdTarget));
+          DeusConsoleVariable& variable = this->getVariable(cmdTarget);
+          commandResult.returnStr = variable.toString();
+          return this->getCVar<T>(cmdTarget);
         } else if (commandResult.argc == 1) { // One token is write op
           // Get the variable for our intended target
           DeusConsoleVariable& variable = this->getVariable(cmdTarget);
@@ -414,6 +449,11 @@ class IDeusConsoleManager {
             variable.writeIntFromBuffer(tokenInput);
           } else { // Should never happen
             assert(false);
+          }
+
+          // Fire on update hook
+          if (variable.onUpdate) {
+            variable.onUpdate(&variable);
           }
 
           // Return new value
@@ -459,9 +499,9 @@ class TDeusStaticConsoleVariable {
     T rawValue;
 
   public:
-    TDeusStaticConsoleVariable(const char* name, T value, const char* description = "", int flags = DEUS_CVAR_DEFAULT) {
+    TDeusStaticConsoleVariable(const char* name, T value, const char* description = "", int flags = DEUS_CVAR_DEFAULT, TDeusConsoleFuncVoid onUpdate = NULL) {
       this->rawValue = value;
-      IDeusConsoleManager::get()->registerCVar(name, this->rawValue, description, flags);
+      IDeusConsoleManager::get()->registerCVar(name, this->rawValue, description, flags, onUpdate);
     }
 
     void set(T value) {

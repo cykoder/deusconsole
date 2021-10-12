@@ -17,12 +17,6 @@ static TDeusStaticConsoleVariable<std::string> CVarTestString(
   "A test string variable"
 );
 
-static TDeusStaticConsoleVariable<int> CVarTestInteger(
-  "test.integer",
-  123,
-  "A test integer variable"
-);
-
 static TDeusStaticConsoleVariable<float> CVarTestFloat(
   "test.float",
   3.142f,
@@ -39,6 +33,17 @@ static TDeusStaticConsoleVariable<bool> CVarTestBool(
   "test.bool",
   true,
   "A test bool variable"
+);
+
+static bool didIntChange = false;
+static TDeusStaticConsoleVariable<int> CVarTestInteger(
+  "test.integer",
+  123,
+  "A test integer variable",
+  DEUS_CVAR_DEFAULT,
+  [](void*) { // Test callback when variable changes
+    didIntChange = true;
+  }
 );
 
 // Test helpers
@@ -127,6 +132,7 @@ int main(int argc, char* argv[]) {
   // Changing numbers with console commands
   console->runCommand("test.integer 12345");
   expectEqual(console->getCVar<int>("test.integer"), 12345, "Changing integer from console command");
+  expectEqual(didIntChange, true, "Changing value fires lambda callback");
 
   console->runCommand("test.uint 1");
   expectEqual(console->getCVar<uint8_t>("test.uint"), 1, "Changing uint from console command");
@@ -166,6 +172,12 @@ int main(int argc, char* argv[]) {
   // Can get help text for a console variable
   expectEqual(console->getHelp("test.uint"), "A test uint8_t variable", "test.uint help text is correct");
   expectEqual(console->getHelp("test.cstring"), "A test C string variable", "test.cstring help text is correct");
+
+  // Return values as strings
+  std::string varReadValue = console->runCommand("test.integer");
+  expectEqual(varReadValue, "54321", "Can run command to get string representation of variable (int)");
+  varReadValue = console->runCommand("test.string");
+  expectEqual(varReadValue, "another test str", "Can run command to get string representation of variable (string)");
 
   // Run without arguments or expecting a return value
   console->runCommand("myMethod");
