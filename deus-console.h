@@ -75,7 +75,7 @@ typedef std::function<std::string()> TDeusConsoleFuncToString;
 typedef std::function<void*()> TDeusConsoleFuncRead;
 typedef std::function<void(void*)> TDeusConsoleFuncVoid;
 typedef std::function<void(char*)> TDeusConsoleFuncWriteChar;
-typedef std::unordered_map<const char*, const char*> DeusConsoleHelpTable;
+typedef std::unordered_map<std::string, std::string> DeusConsoleHelpTable;
 
 // Wrapper for console variables and their flags/methods
 struct DeusConsoleVariable {
@@ -196,7 +196,7 @@ class IDeusConsoleManager {
     }
 
     // Returns a reference to the help table itself, useful for iterating over potential cmds
-    std::unordered_map<std::string, std::string>& getHelpTable() {
+    DeusConsoleHelpTable& getHelpTable() {
       return this->helpTable;
     }
 

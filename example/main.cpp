@@ -88,13 +88,15 @@ inline void processCommand(char* cmd) {
   }
 }
 
-// Compare strings by n
-inline static int compareStrs(const char *s1, const char *s2, int n) {
+// Compare two strings (case-insensitive) up to n characters
+inline static int compareStrs(const std::string& s1, const std::string& s2, int n) {
   int d = 0;
-  while (n > 0 && (d = tolower(*s2) - tolower(*s1)) == 0 && *s1) {
-    s1++;
-    s2++;
-    n--;
+  int i = 0;
+  while (i < n && (
+    d = std::tolower(static_cast<unsigned char>(s2[i])) -
+      std::tolower(static_cast<unsigned char>(s1[i]))
+    ) == 0 && i < static_cast<int>(s1.size())) {
+    ++i;
   }
   return d;
 }
