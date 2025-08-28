@@ -1,12 +1,11 @@
 /*
- * Copyright 2021-2021 Samuel Hellawell. All rights reserved.
- * License: https://github.com/SamHellawell/deusconsole/blob/master/LICENSE
+ * Copyright 2021-2025 Samuel Hellawell. All rights reserved.
+ * License: https://github.com/cykoder/deusconsole/blob/master/LICENSE
  */
 
 #ifndef DEUS_CONSOLE_MGR
 #define DEUS_CONSOLE_MGR
 
-#include <iostream>
 #include <unordered_map>
 #include <deque>
 #include <functional>
@@ -17,13 +16,14 @@
 #include <cassert>
 #include <string.h>
 #include <type_traits>
+#include <cstdint>
 
 #define TEXT(txt) txt \
 
 // Base exception helper
 struct DeusConsoleException : public std::exception {
    std::string s;
-   DeusConsoleException(std::string ss) : s(ss) {}
+   DeusConsoleException(const std::string& ss) : s(ss) {}
    ~DeusConsoleException() throw () {}
    const char* what() const throw() {
      return s.c_str();
@@ -33,9 +33,9 @@ struct DeusConsoleException : public std::exception {
 // Flags that can be set on defined console variables
 enum EDeusCVarFlags {
   DEUS_CVAR_DEFAULT      = 0, // Default, no flags are set, the value is set by the constructor
-  DEUS_CVAR_DEVELOPER    = (1 << 1), // Console variables marked with this flag cant be changed in a final build
+  DEUS_CVAR_DEVELOPER    = (1 << 1), // Console variables marked with this flag can't be changed in a final build
   DEUS_CVAR_READONLY     = (1 << 2), // Console variables cannot be changed by the user
-  DEUS_CVAR_UNREGISTERED = (1 << 3), // Doesnt get registered to console manager
+  DEUS_CVAR_UNREGISTERED = (1 << 3), // doesn't get registered to console manager
 };
 
 // Flags that can be set on defined console variables
@@ -94,11 +94,11 @@ inline int isNumericStr(char* str, size_t len) {
     return 0;
   }
   bool hasPeriod = false;
-  for (int i = 0; i < len; i++) {
+  for (size_t i = 0; i < len; i++) {
     char cChar = str[i];
     if (cChar == '.') { // check if is a decimal number
       if (hasPeriod) {
-        return 0; // cannot be a numberic string with two periods
+        return 0; // cannot be a numeric string with two periods
       } else {
         hasPeriod = true;
       }
@@ -155,38 +155,30 @@ struct TConsoleTypeHelper<std::string> {
   }
 };
 
-
-
 // Class to manage all console variables and commands
 // Does not do any input processing
 class IDeusConsoleManager {
   private:
-    std::unordered_map<const char*, DeusConsoleVariable> variableTable;
-    std::unordered_map<const char*, TDeusConsoleFunc> methodTable;
-    DeusConsoleHelpTable helpTable;
+    std::unordered_map<std::string, DeusConsoleVariable> variableTable;
+    std::unordered_map<std::string, TDeusConsoleFunc> methodTable;
+    std::unordered_map<std::string, std::string> helpTable;
 
     // Gets a variable reference by name
-    DeusConsoleVariable& getVariable(const char* name) {
-      for (auto kv : this->variableTable) {
-        if (strcmp(kv.first, name) == 0) {
-          return this->variableTable[kv.first];
-        }
+    DeusConsoleVariable& getVariable(const std::string& name) {
+      auto it = this->variableTable.find(name);
+      if (it != this->variableTable.end()) {
+        return it->second;
       }
-
-      throw DeusConsoleException("Console variable does not exist: " + (std::string)(name));
-      return this->variableTable[name];
+      throw DeusConsoleException("Console variable does not exist: " + name);
     }
 
     // Gets a method function object reference by name
-    TDeusConsoleFunc& getMethod(const char* name) {
-      for (auto kv : this->methodTable) {
-        if (strcmp(kv.first, name) == 0) {
-          return this->methodTable[kv.first];
-        }
+    TDeusConsoleFunc& getMethod(const std::string& name) {
+      auto it = this->methodTable.find(name);
+      if (it != this->methodTable.end()) {
+        return it->second;
       }
-
-      throw DeusConsoleException("Console method does not exist: " + (std::string)(name));
-      return this->methodTable[name];
+      throw DeusConsoleException("Console method does not exist: " + name);
     }
 
   public:
@@ -196,45 +188,39 @@ class IDeusConsoleManager {
     void bindBaseCommands() {
       this->registerMethod("help", [this](DeusCommandType& cmd) {
         std::string result = "Method/variable list:\n";
-        for (auto kv : this->helpTable) {
-          result += (std::string)(kv.first) + "\t\t" + (std::string)(kv.second) + "\n";
+        for (auto& kv : this->helpTable) {
+          result += kv.first + "\t\t" + kv.second + "\n";
         }
         cmd.returnStr = result;
       }, "Returns a list of variables/methods and their descriptions");
     }
 
     // Returns a reference to the help table itself, useful for iterating over potential cmds
-    DeusConsoleHelpTable& getHelpTable() {
+    std::unordered_map<std::string, std::string>& getHelpTable() {
       return this->helpTable;
     }
 
     // Returns help text for a specific variable or method
-    const char* getHelp(const char* key) {
-      return this->helpTable[key];
+    std::string getHelp(const std::string& key) {
+      auto it = this->helpTable.find(key);
+      if (it != this->helpTable.end()) {
+        return it->second.c_str();
+      }
+      return nullptr;
     }
 
     // Checks whether a variable with that name exists in the table
-    bool variableExists(const char* name) {
-      for (auto kv : this->variableTable) {
-        if (strcmp(kv.first, name) == 0) {
-          return true;
-        }
-      }
-      return false;
+    bool variableExists(const std::string& name) {
+      return this->variableTable.find(name) != this->variableTable.end();
     }
 
     // Checks whether a method with that name exists in the table
-    bool methodExists(const char* name) {
-      for (auto kv : this->methodTable) {
-        if (strcmp(kv.first, name) == 0) {
-          return true;
-        }
-      }
-      return false;
+    bool methodExists(const std::string& name) {
+      return this->methodTable.find(name) != this->methodTable.end();
     }
 
     // Registers a void function object that takes DeusCommandType as its only argument
-    void registerMethod(const char* name, TDeusConsoleFunc func, const char* description = "") {
+    void registerMethod(const std::string& name, TDeusConsoleFunc func, const std::string& description = "") {
       if (this->methodTable.find(name) == this->methodTable.end()) {
         this->methodTable[name] = func;
         this->helpTable[name] = description;
@@ -244,7 +230,7 @@ class IDeusConsoleManager {
     // This method will take a name, value reference, help description and flags for a console variable
     // and will assign it to the various tables required for reading/writing/remembering arguments
     template <typename T>
-    void registerCVar(const char* name, T& value, const char* description = "", int flags = DEUS_CVAR_DEFAULT, TDeusConsoleFuncVoid onUpdate = NULL) {
+    void registerCVar(const std::string& name, T& value, const std::string& description = "", int flags = DEUS_CVAR_DEFAULT, TDeusConsoleFuncVoid onUpdate = nullptr) {
       // Skip registration if flag defined
       if (flags & DEUS_CVAR_UNREGISTERED) {
         return;
@@ -273,11 +259,11 @@ class IDeusConsoleManager {
     template <typename T, std::enable_if_t<std::is_arithmetic_v<std::remove_reference_t<T>>> * = nullptr> inline
     void bindWriteMethods(T& value, DeusConsoleVariable& variable) {
       variable.writeDecimalFromBuffer = [&value](char* data) {
-        T tokenValue = atof(data);
+        T tokenValue = static_cast<T>(atof(data));
         value = tokenValue;
       };
       variable.writeIntFromBuffer = [&value](char* data) {
-        T tokenValue = atol(data);
+        T tokenValue = static_cast<T>(atol(data));
         value = tokenValue;
       };
       variable.write = [&value](void* data) {
@@ -291,11 +277,17 @@ class IDeusConsoleManager {
       variable.write = [&value](void* data) {
         value = *static_cast<T*>(data);
       };
+      variable.writeIntFromBuffer = [&value](char* data) {
+        value = T(data);
+      };
+      variable.writeDecimalFromBuffer = [&value](char* data) {
+        value = T(data);
+      };
     }
 
     // This method will take the ptr of the value and cast to its native type as a reference
     template <typename T>
-    T& getCVar(const char* name) {
+    T& getCVar(const std::string& name) {
       DeusConsoleVariable& variable = this->getVariable(name);
       TDeusConsoleFuncRead& readFunc = variable.read;
       return *static_cast<T*>(readFunc());
@@ -409,13 +401,13 @@ class IDeusConsoleManager {
     template <typename T>
     T runCommandAs(const char* command, DeusCommandType& commandResult) {
       this->parseCommand(command, commandResult);
-      const char* cmdTarget = (const char*)commandResult.target;
+      std::string cmdTarget = commandResult.target;
       const bool methodExists = this->methodExists(cmdTarget);
 
       // Check if target is a variable to write/read
       if (this->variableExists(cmdTarget)) {
         if (commandResult.argc == 0) { // Zero tokens is a read op
-          // TODO: FIX: Reading variable doesnt add its value to returnStr
+          // TODO: FIX: Reading variable doesn't add its value to returnStr
           DeusConsoleVariable& variable = this->getVariable(cmdTarget);
           commandResult.returnStr = variable.toString();
           return this->getCVar<T>(cmdTarget);
@@ -424,7 +416,6 @@ class IDeusConsoleManager {
           DeusConsoleVariable& variable = this->getVariable(cmdTarget);
 
           // Disallow writing to constants
-          // TODO: disallow writing if production mode
           if (variable.flags & DEUS_CVAR_READONLY) {
             throw DeusConsoleException("Cannot write to a constant variable");
           }
@@ -453,7 +444,7 @@ class IDeusConsoleManager {
 
           // Fire on update hook
           if (variable.onUpdate) {
-            variable.onUpdate(&variable);
+            variable.onUpdate(variable.read());
           }
 
           // Return new value
@@ -463,15 +454,15 @@ class IDeusConsoleManager {
         }
       }
 
-      // Check if a method exists, since variable read/write didnt pass
+      // Check if a method exists, since variable read/write didn't pass
       if (methodExists) {
         TDeusConsoleFunc& method = this->getMethod(cmdTarget);
         method(commandResult);
       } else {
-        throw DeusConsoleException("No variable or method found: " + (std::string)cmdTarget);
+        throw DeusConsoleException("No variable or method found: " + cmdTarget);
       }
 
-      return static_cast<T>(NULL);
+      return T{};
     }
 
     // This method will take a command string and return its result typecasted to the supplied type

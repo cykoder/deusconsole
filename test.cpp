@@ -1,4 +1,5 @@
 #include "deus-console.h"
+#include <cstdint>
 #include <iostream>
 
 // Test console variables
