@@ -206,7 +206,7 @@ class IDeusConsoleManager {
       if (it != this->helpTable.end()) {
         return it->second.c_str();
       }
-      return nullptr;
+      return "";
     }
 
     // Checks whether a variable with that name exists in the table
