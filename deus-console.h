@@ -410,7 +410,12 @@ class IDeusConsoleManager {
           // TODO: FIX: Reading variable doesn't add its value to returnStr
           DeusConsoleVariable& variable = this->getVariable(cmdTarget);
           commandResult.returnStr = variable.toString();
-          return this->getCVar<T>(cmdTarget);
+          // For string return types, return the string representation instead of the raw value
+          if constexpr (std::is_same_v<T, const char*> || std::is_same_v<T, char*>) {
+            return commandResult.returnStr.c_str();
+          } else {
+            return this->getCVar<T>(cmdTarget);
+          }
         } else if (commandResult.argc == 1) { // One token is write op
           // Get the variable for our intended target
           DeusConsoleVariable& variable = this->getVariable(cmdTarget);
@@ -447,8 +452,16 @@ class IDeusConsoleManager {
             variable.onUpdate(variable.read());
           }
 
+          // Update return string with the new value
+          commandResult.returnStr = variable.toString();
+
           // Return new value
-          return static_cast<T>(this->getCVar<T>(cmdTarget));
+          // For string return types, return the string representation instead of the raw value
+          if constexpr (std::is_same_v<T, const char*> || std::is_same_v<T, char*>) {
+            return commandResult.returnStr.c_str();
+          } else {
+            return static_cast<T>(this->getCVar<T>(cmdTarget));
+          }
         } else if (!methodExists) { // More than 1 token is a no-op on a variable
           throw DeusConsoleException("Too many arguments");
         }
